@@ -34,9 +34,14 @@ fn main() {
         match key.unwrap() {
             Key::Ctrl('c') => break,
             Key::Ctrl('d') => break,
+            Key::Char('\n') => break,
             Key::Char(c) => write!(stdout, "{}", c).unwrap(),
-            _ => write!(stdout, "*").unwrap(),
+            _ => {},
         }
         stdout.flush().unwrap();
     }
+
+    // Go to the next line before exiting.
+    write!(stdout, "\n\r").unwrap();
+    stdout.flush().unwrap();
 }
