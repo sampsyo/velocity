@@ -6,6 +6,8 @@ use std::io::{Write, stdout, stdin};
 use termion::input::TermRead;
 use termion::event::Key;
 use termion::raw::IntoRawMode;
+use termion::cursor;
+use termion::clear;
 
 fn is_note(entry: &DirEntry) -> bool {
     entry.file_type().is_file() &&
@@ -35,6 +37,11 @@ fn main() {
             Key::Ctrl('c') => break,
             Key::Ctrl('d') => break,
             Key::Char('\n') => break,
+            Key::Backspace => {
+                write!(stdout, "{}{}",
+                       cursor::Left(1),
+                       clear::AfterCursor).unwrap();
+            },
             Key::Char(c) => write!(stdout, "{}", c).unwrap(),
             _ => {},
         }
