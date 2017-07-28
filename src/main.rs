@@ -34,6 +34,7 @@ fn main() {
     stdout.write_all(b"> ").unwrap();
     stdout.flush().unwrap();
     let mut curstr = String::new();
+    let mut curlen = 0;
     for event in stdin.events() {
         match event.unwrap() {
             Event::Key(Key::Ctrl('c')) => break,
@@ -46,6 +47,7 @@ fn main() {
                         write!(stdout, "{}{}",
                                cursor::Left(1),
                                clear::AfterCursor).unwrap();
+                        curlen -= 1;
                     }
                     None => {} // Do nothing.
                 }
@@ -53,13 +55,15 @@ fn main() {
             Event::Key(Key::Char(c)) => {
                 // Add the character to our string.
                 curstr.push(c);
+                curlen += 1;
 
                 // Show the character.
                 write!(stdout, "{}", c).unwrap();
 
-                // Move to the next line and back??
-                write!(stdout, "\n{}x{}",
+                // Move to the next line.
+                write!(stdout, "\n{}{}{}",
                        cursor::Left(1),
+                       curlen,
                        cursor::Up(1)).unwrap();
             }
             _ => {},
