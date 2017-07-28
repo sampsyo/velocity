@@ -10,6 +10,8 @@ use termion::raw::IntoRawMode;
 use termion::cursor;
 use termion::clear;
 
+const PROMPT: &'static [u8] = b"> ";
+
 fn is_note(entry: &DirEntry) -> bool {
     entry.file_type().is_file() &&
     entry.file_name()
@@ -31,7 +33,7 @@ fn main() {
     let stdout = stdout();
     let mut stdout = stdout.into_raw_mode().unwrap();
     let stdin = stdin();
-    stdout.write_all(b"> ").unwrap();
+    stdout.write_all(PROMPT).unwrap();
     stdout.flush().unwrap();
     let mut curstr = String::new();
     let mut curlen = 0;
@@ -61,9 +63,11 @@ fn main() {
                 write!(stdout, "{}", c).unwrap();
 
                 // Move to the next line.
-                write!(stdout, "\n{}{}{}",
-                       cursor::Left(1),
+                let posx = (PROMPT.len() + curlen) as u16;
+                write!(stdout, "\n{}{}\r{}{}",
+                       cursor::Left(posx),
                        curlen,
+                       cursor::Right(posx),
                        cursor::Up(1)).unwrap();
             }
             _ => {},
