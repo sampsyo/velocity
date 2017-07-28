@@ -4,6 +4,7 @@ extern crate termion;
 use walkdir::{WalkDir, DirEntry};
 use std::io::{Write, stdout, stdin};
 use termion::input::TermRead;
+use termion::event::Event;
 use termion::event::Key;
 use termion::raw::IntoRawMode;
 use termion::cursor;
@@ -32,17 +33,25 @@ fn main() {
     let stdin = stdin();
     stdout.write_all(b"> ").unwrap();
     stdout.flush().unwrap();
-    for key in stdin.keys() {
-        match key.unwrap() {
-            Key::Ctrl('c') => break,
-            Key::Ctrl('d') => break,
-            Key::Char('\n') => break,
-            Key::Backspace => {
+    for event in stdin.events() {
+        match event.unwrap() {
+            Event::Key(Key::Ctrl('c')) => break,
+            Event::Key(Key::Ctrl('d')) => break,
+            Event::Key(Key::Char('\n')) => break,
+            Event::Key(Key::Backspace) => {
                 write!(stdout, "{}{}",
                        cursor::Left(1),
                        clear::AfterCursor).unwrap();
             },
-            Key::Char(c) => write!(stdout, "{}", c).unwrap(),
+            Event::Key(Key::Char(c)) => {
+                // Show the character.
+                write!(stdout, "{}", c).unwrap();
+
+                // Move to the next line and back??
+                write!(stdout, "\n{}x{}",
+                       cursor::Left(1),
+                       cursor::Up(1)).unwrap();
+            },
             _ => {},
         }
         stdout.flush().unwrap();
