@@ -33,17 +33,27 @@ fn main() {
     let stdin = stdin();
     stdout.write_all(b"> ").unwrap();
     stdout.flush().unwrap();
+    let mut curstr = String::new();
     for event in stdin.events() {
         match event.unwrap() {
             Event::Key(Key::Ctrl('c')) => break,
             Event::Key(Key::Ctrl('d')) => break,
             Event::Key(Key::Char('\n')) => break,
             Event::Key(Key::Backspace) => {
-                write!(stdout, "{}{}",
-                       cursor::Left(1),
-                       clear::AfterCursor).unwrap();
-            },
+                match curstr.pop() {
+                    Some(_) => {
+                        // Move the cursor back.
+                        write!(stdout, "{}{}",
+                               cursor::Left(1),
+                               clear::AfterCursor).unwrap();
+                    }
+                    None => {} // Do nothing.
+                }
+            }
             Event::Key(Key::Char(c)) => {
+                // Add the character to our string.
+                curstr.push(c);
+
                 // Show the character.
                 write!(stdout, "{}", c).unwrap();
 
@@ -51,7 +61,7 @@ fn main() {
                 write!(stdout, "\n{}x{}",
                        cursor::Left(1),
                        cursor::Up(1)).unwrap();
-            },
+            }
             _ => {},
         }
         stdout.flush().unwrap();
