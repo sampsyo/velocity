@@ -9,3 +9,4 @@ path = "src/main.rs"
 
 [dependencies]
 walkdir = "1"
+termion = "1"
