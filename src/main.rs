@@ -2,7 +2,8 @@ extern crate walkdir;
 extern crate termion;
 
 use walkdir::{WalkDir, DirEntry};
-use std::io::{Write, stdout, stdin};
+use std::io::{self, Read, Write, stdout, stdin};
+use std::fs::File;
 use termion::input::TermRead;
 use termion::event::Event;
 use termion::event::Key;
@@ -20,6 +21,15 @@ fn is_note(entry: &DirEntry) -> bool {
          .unwrap_or(false)
 }
 
+// Check whether a note contains a term.
+// TODO: Avoid reading the whole contents into memory?
+fn matches(entry: &DirEntry, term: &str) -> Result<bool, io::Error> {
+    let mut file = File::open(entry.path())?;
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)?;
+    Ok(contents.contains(term))
+}
+
 // Find the notes matching a term.
 // TODO: Keep these matches in memory instead of re-scanning the directory
 // every time. Then, incrementally filter in-memory matches when new characters
@@ -28,12 +38,16 @@ fn is_note(entry: &DirEntry) -> bool {
 // TODO: Do this searching in a separate thread to avoid blocking the UI.
 fn find_notes(dir: &str, term: &str) -> Vec<DirEntry> {
     let walker = WalkDir::new(dir).into_iter();
-    walker.filter_map(|e| e.ok()).filter(is_note).collect()
+    walker.filter_map(|e| e.ok()).
+        filter(is_note).
+        filter(|e| matches(e, term).unwrap()).
+        collect()
 }
 
 // Handle an entered search term and display results. Precondition: the
 // terminal cursor is at the left-hand edge of the screen, ready to write more
 // output. Postcondition: the cursor is returned to that position.
+// TODO: Show the top match *in* the entry line instead of below, like NV.
 fn run_search(term: &str, stdout: &mut Write) {
     let notes = find_notes(".", &term);
     let mut count = 0;
