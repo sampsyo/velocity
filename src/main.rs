@@ -67,6 +67,22 @@ fn run_search(term: &str, stdout: &mut Write) {
     }
 }
 
+fn cursor_to_output(stdout: &mut Write) {
+    // Move to the next line.
+    write!(stdout, "{}\r\n{}",
+           cursor::Hide,
+           clear::AfterCursor).unwrap();
+}
+
+fn cursor_to_input(stdout: &mut Write, curpos: usize) {
+    // Move *back* to the text entry point.
+    let posx = (PROMPT.len() + curpos) as u16;
+    write!(stdout, "{}{}{}",
+           cursor::Right(posx),
+           cursor::Up(1),
+           cursor::Show).unwrap();
+}
+
 fn interact() {
     let stdout = stdout();
     let mut stdout = stdout.into_raw_mode().unwrap();
@@ -103,20 +119,10 @@ fn interact() {
                 // Show the character.
                 write!(stdout, "{}", c).unwrap();
 
-                // Move to the next line.
-                write!(stdout, "{}\r\n{}",
-                       cursor::Hide,
-                       clear::AfterCursor).unwrap();
-
                 // Run the search.
+                cursor_to_output(&mut stdout);
                 run_search(&curstr, &mut stdout);
-
-                // Move *back* to the text entry point.
-                let posx = (PROMPT.len() + curlen) as u16;
-                write!(stdout, "{}{}{}",
-                       cursor::Right(posx),
-                       cursor::Up(1),
-                       cursor::Show).unwrap();
+                cursor_to_input(&mut stdout, curlen);
             }
             _ => {},
         }
