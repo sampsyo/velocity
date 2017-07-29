@@ -97,9 +97,13 @@ fn interact() {
 
     for event in stdin.events() {
         match event.unwrap() {
+            // Exit.
             Event::Key(Key::Ctrl('c')) => break,
             Event::Key(Key::Ctrl('d')) => break,
+
+            // TODO: Actually launch $EDITOR.
             Event::Key(Key::Char('\n')) => break,
+
             Event::Key(Key::Backspace) => {
                 match curstr.pop() {
                     Some(_) => {
