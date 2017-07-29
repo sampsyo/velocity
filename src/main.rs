@@ -23,9 +23,23 @@ fn is_note(entry: &DirEntry) -> bool {
 // Handle an entered search term and display results. Precondition: the
 // terminal cursor is at the left-hand edge of the screen, ready to write more
 // output. Postcondition: the cursor is returned to that position.
-fn search(term: &str, stdout: &mut Write) {
-    write!(stdout, "{}", term.len()).unwrap();
-    write!(stdout, "\r").unwrap();  // Return cursor.
+fn run_search(term: &str, stdout: &mut Write) {
+    let walker = WalkDir::new(".").into_iter();
+    let mut count = 0;
+    for entry in walker.filter_map(|e| e.ok()) {
+        if is_note(&entry) {
+            if count != 0 {
+                write!(stdout, "\n").unwrap();
+            }
+            write!(stdout, "{}\r", entry.path().display()).unwrap();
+            count += 1;
+        }
+    }
+
+    // Move the cursor back up.
+    if count > 1 {
+        write!(stdout, "{}", cursor::Up(count - 1)).unwrap();
+    }
 }
 
 fn interact() {
@@ -69,7 +83,7 @@ fn interact() {
                        cursor::Left(posx)).unwrap();
 
                 // Run the search.
-                search(&curstr, &mut stdout);
+                run_search(&curstr, &mut stdout);
 
                 // Move *back* to the text entry point.
                 write!(stdout, "{}{}",
@@ -87,13 +101,5 @@ fn interact() {
 }
 
 fn main() {
-    // Walker experiment.
-    let walker = WalkDir::new(".").into_iter();
-    for entry in walker.filter_map(|e| e.ok()) {
-        if is_note(&entry) {
-            println!("{}", entry.path().display());
-        }
-    }
-
     interact();
 }
