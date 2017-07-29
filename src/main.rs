@@ -20,13 +20,18 @@ fn is_note(entry: &DirEntry) -> bool {
          .unwrap_or(false)
 }
 
+fn find_notes(dir: &str, term: &str) -> Vec<DirEntry> {
+    let walker = WalkDir::new(dir).into_iter();
+    walker.filter_map(|e| e.ok()).filter(is_note).collect()
+}
+
 // Handle an entered search term and display results. Precondition: the
 // terminal cursor is at the left-hand edge of the screen, ready to write more
 // output. Postcondition: the cursor is returned to that position.
 fn run_search(term: &str, stdout: &mut Write) {
-    let walker = WalkDir::new(".").into_iter();
+    let notes = find_notes(".", &term);
     let mut count = 0;
-    for entry in walker.filter_map(|e| e.ok()).filter(is_note) {
+    for entry in notes {
         if count != 0 {
             write!(stdout, "\n").unwrap();
         }
