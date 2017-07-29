@@ -79,16 +79,18 @@ fn interact() {
 
                 // Move to the next line.
                 let posx = (PROMPT.len() + curlen) as u16;
-                write!(stdout, "\n{}",
+                write!(stdout, "{}\n{}",
+                       cursor::Hide,
                        cursor::Left(posx)).unwrap();
 
                 // Run the search.
                 run_search(&curstr, &mut stdout);
 
                 // Move *back* to the text entry point.
-                write!(stdout, "{}{}",
+                write!(stdout, "{}{}{}",
                        cursor::Right(posx),
-                       cursor::Up(1)).unwrap();
+                       cursor::Up(1),
+                       cursor::Show).unwrap();
             }
             _ => {},
         }
