@@ -67,6 +67,8 @@ fn run_search(term: &str, stdout: &mut Write) {
     }
 }
 
+// TODO Avoid an unpleasant filter by not indiscriminately clearing after
+// cursor and instead clearing only the emptied rows.
 fn cursor_to_output(stdout: &mut Write) {
     // Move to the next line.
     write!(stdout, "{}\r\n{}",
@@ -107,6 +109,13 @@ fn interact() {
                         write!(stdout, "{}{}",
                                cursor::Left(1),
                                clear::AfterCursor).unwrap();
+
+                        // Run the search.
+                        if curlen > 0 {
+                            cursor_to_output(&mut stdout);
+                            run_search(&curstr, &mut stdout);
+                            cursor_to_input(&mut stdout, curlen);
+                        }
                     }
                     None => {} // Do nothing.
                 }
