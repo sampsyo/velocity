@@ -26,14 +26,12 @@ fn is_note(entry: &DirEntry) -> bool {
 fn run_search(term: &str, stdout: &mut Write) {
     let walker = WalkDir::new(".").into_iter();
     let mut count = 0;
-    for entry in walker.filter_map(|e| e.ok()) {
-        if is_note(&entry) {
-            if count != 0 {
-                write!(stdout, "\n").unwrap();
-            }
-            write!(stdout, "{}\r", entry.path().display()).unwrap();
-            count += 1;
+    for entry in walker.filter_map(|e| e.ok()).filter(is_note) {
+        if count != 0 {
+            write!(stdout, "\n").unwrap();
         }
+        write!(stdout, "{}\r", entry.path().display()).unwrap();
+        count += 1;
     }
 
     // Move the cursor back up.
