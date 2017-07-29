@@ -20,23 +20,20 @@ fn is_note(entry: &DirEntry) -> bool {
          .unwrap_or(false)
 }
 
-fn main() {
-    // Walker experiment.
-    let walker = WalkDir::new(".").into_iter();
-    for entry in walker.filter_map(|e| e.ok()) {
-        if is_note(&entry) {
-            println!("{}", entry.path().display());
-        }
-    }
+fn search(term: &str) {
+    print!("{}", term.len());
+}
 
-    // Termion experiment.
+fn interact() {
     let stdout = stdout();
     let mut stdout = stdout.into_raw_mode().unwrap();
     let stdin = stdin();
     stdout.write_all(PROMPT).unwrap();
     stdout.flush().unwrap();
+
     let mut curstr = String::new();
     let mut curlen = 0;
+
     for event in stdin.events() {
         match event.unwrap() {
             Event::Key(Key::Ctrl('c')) => break,
@@ -64,9 +61,10 @@ fn main() {
 
                 // Move to the next line.
                 let posx = (PROMPT.len() + curlen) as u16;
-                write!(stdout, "\n{}{}\r{}{}",
-                       cursor::Left(posx),
-                       curlen,
+                write!(stdout, "\n{}",
+                       cursor::Left(posx)).unwrap();
+                search(&curstr);
+                write!(stdout, "\r{}{}",
                        cursor::Right(posx),
                        cursor::Up(1)).unwrap();
             }
@@ -78,4 +76,16 @@ fn main() {
     // Go to the next line before exiting.
     write!(stdout, "\n\r").unwrap();
     stdout.flush().unwrap();
+}
+
+fn main() {
+    // Walker experiment.
+    let walker = WalkDir::new(".").into_iter();
+    for entry in walker.filter_map(|e| e.ok()) {
+        if is_note(&entry) {
+            println!("{}", entry.path().display());
+        }
+    }
+
+    interact();
 }
