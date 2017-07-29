@@ -104,9 +104,10 @@ fn interact() {
 
                 // Move to the next line.
                 let posx = (PROMPT.len() + curlen) as u16;
-                write!(stdout, "{}\n{}",
+                write!(stdout, "{}{}\n{}",
                        cursor::Hide,
-                       cursor::Left(posx)).unwrap();
+                       cursor::Left(posx),
+                       clear::AfterCursor).unwrap();
 
                 // Run the search.
                 run_search(&curstr, &mut stdout);
