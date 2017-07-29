@@ -12,6 +12,7 @@ use termion::cursor;
 use termion::clear;
 
 const PROMPT: &'static [u8] = b"> ";
+const MAX_MATCHES: usize = 5;
 
 fn is_note(entry: &DirEntry) -> bool {
     entry.file_type().is_file() &&
@@ -41,6 +42,7 @@ fn find_notes(dir: &str, term: &str) -> Vec<DirEntry> {
     walker.filter_map(|e| e.ok()).
         filter(is_note).
         filter(|e| matches(e, term).unwrap()).
+        take(MAX_MATCHES).
         collect()
 }
 
