@@ -20,8 +20,12 @@ fn is_note(entry: &DirEntry) -> bool {
          .unwrap_or(false)
 }
 
-fn search(term: &str) {
-    print!("{}", term.len());
+// Handle an entered search term and display results. Precondition: the
+// terminal cursor is at the left-hand edge of the screen, ready to write more
+// output. Postcondition: the cursor is returned to that position.
+fn search(term: &str, stdout: &mut Write) {
+    write!(stdout, "{}", term.len()).unwrap();
+    write!(stdout, "\r").unwrap();  // Return cursor.
 }
 
 fn interact() {
@@ -63,8 +67,12 @@ fn interact() {
                 let posx = (PROMPT.len() + curlen) as u16;
                 write!(stdout, "\n{}",
                        cursor::Left(posx)).unwrap();
-                search(&curstr);
-                write!(stdout, "\r{}{}",
+
+                // Run the search.
+                search(&curstr, &mut stdout);
+
+                // Move *back* to the text entry point.
+                write!(stdout, "{}{}",
                        cursor::Right(posx),
                        cursor::Up(1)).unwrap();
             }
