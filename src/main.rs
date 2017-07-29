@@ -85,11 +85,12 @@ fn interact() {
             Event::Key(Key::Backspace) => {
                 match curstr.pop() {
                     Some(_) => {
+                        curlen -= 1;
+
                         // Move the cursor back.
                         write!(stdout, "{}{}",
                                cursor::Left(1),
                                clear::AfterCursor).unwrap();
-                        curlen -= 1;
                     }
                     None => {} // Do nothing.
                 }
@@ -103,16 +104,15 @@ fn interact() {
                 write!(stdout, "{}", c).unwrap();
 
                 // Move to the next line.
-                let posx = (PROMPT.len() + curlen) as u16;
-                write!(stdout, "{}{}\n{}",
+                write!(stdout, "{}\r\n{}",
                        cursor::Hide,
-                       cursor::Left(posx),
                        clear::AfterCursor).unwrap();
 
                 // Run the search.
                 run_search(&curstr, &mut stdout);
 
                 // Move *back* to the text entry point.
+                let posx = (PROMPT.len() + curlen) as u16;
                 write!(stdout, "{}{}{}",
                        cursor::Right(posx),
                        cursor::Up(1),
