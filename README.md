@@ -8,5 +8,6 @@ Assumptions:
 * You have a big folder full of text files.
 * The title of the note is the filename.
 * Every note's extension is `.txt`.
+* You have an `$EDITOR` you like.
 
 [nv]: http://notational.net
