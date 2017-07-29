@@ -20,6 +20,12 @@ fn is_note(entry: &DirEntry) -> bool {
          .unwrap_or(false)
 }
 
+// Find the notes matching a term.
+// TODO: Keep these matches in memory instead of re-scanning the directory
+// every time. Then, incrementally filter in-memory matches when new characters
+// are added; perhaps preserve old match lists for when the user hits
+// backspace.
+// TODO: Do this searching in a separate thread to avoid blocking the UI.
 fn find_notes(dir: &str, term: &str) -> Vec<DirEntry> {
     let walker = WalkDir::new(dir).into_iter();
     walker.filter_map(|e| e.ok()).filter(is_note).collect()
