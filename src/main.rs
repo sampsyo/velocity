@@ -12,6 +12,7 @@ use termion::event::Key;
 use termion::raw::IntoRawMode;
 use termion::cursor;
 use termion::clear;
+use termion::color;
 
 const PROMPT: &'static [u8] = b"> ";
 const MAX_MATCHES: usize = 5;
@@ -99,7 +100,10 @@ fn run_search(term: &str, stdout: &mut Write) {
 
         // Show the preview for the first note.
         if count == 0 {
-            write!(stdout, "\n{}\r", m.preview()).unwrap();
+            write!(stdout, "\n{}{}{}\r",
+                   color::Fg(color::White),
+                   m.preview(),
+                   color::Fg(color::Reset)).unwrap();
             lines += 1;
         }
 
