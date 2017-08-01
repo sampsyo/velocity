@@ -86,9 +86,8 @@ fn find_notes(dir: &str, term: &str) -> Vec<Match> {
 // TODO: Show the top match *in* the entry line instead of below, like NV.
 fn run_search(term: &str, stdout: &mut Write) {
     let notes = find_notes(".", &term);
-    let mut count = 0;
     let mut lines = 0;
-    for m in notes {
+    for (count, m) in notes.iter().enumerate() {
         // On non-first lines, move down to the next line.
         if count != 0 {
             write!(stdout, "\n").unwrap();
@@ -106,8 +105,6 @@ fn run_search(term: &str, stdout: &mut Write) {
                    color::Fg(color::Reset)).unwrap();
             lines += 1;
         }
-
-        count += 1;
     }
 
     // Move the cursor back up.
