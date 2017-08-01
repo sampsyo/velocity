@@ -40,14 +40,18 @@ impl Match {
 }
 
 // Check whether a note contains a term.
-fn matches(path: &Path, term: &str) -> Result<bool, io::Error> {
+fn note_match(path: &Path, term: &str) -> Result<Option<Match>, io::Error> {
     let mut file = File::open(path)?;
 
     // TODO: Avoid reading the whole contents into memory at once?
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
 
-    Ok(contents.contains(term))
+    if contents.contains(term) {
+        Ok(Some(Match { path: path.to_path_buf() }))
+    } else {
+        Ok(None)
+    }
 }
 
 // Find the notes matching a term.
@@ -60,9 +64,8 @@ fn find_notes(dir: &str, term: &str) -> Vec<Match> {
     let walker = WalkDir::new(dir).into_iter();
     walker.filter_map(|e| e.ok()).
         filter(is_note).
-        filter(|e| matches(&e.path(), term).unwrap()).
+        filter_map(|e| note_match(&e.path(), term).unwrap()).
         take(MAX_MATCHES).
-        map(|e| Match { path: e.path().to_path_buf() }).
         collect()
 }
 
