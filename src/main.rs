@@ -22,6 +22,10 @@ fn is_note(entry: &DirEntry) -> bool {
          .unwrap_or(false)
 }
 
+struct Match {
+    entry: DirEntry,
+}
+
 // Check whether a note contains a term.
 // TODO: Avoid reading the whole contents into memory?
 fn matches(entry: &DirEntry, term: &str) -> Result<bool, io::Error> {
@@ -37,12 +41,13 @@ fn matches(entry: &DirEntry, term: &str) -> Result<bool, io::Error> {
 // are added; perhaps preserve old match lists for when the user hits
 // backspace.
 // TODO: Do this searching in a separate thread to avoid blocking the UI.
-fn find_notes(dir: &str, term: &str) -> Vec<DirEntry> {
+fn find_notes(dir: &str, term: &str) -> Vec<Match> {
     let walker = WalkDir::new(dir).into_iter();
     walker.filter_map(|e| e.ok()).
         filter(is_note).
         filter(|e| matches(e, term).unwrap()).
         take(MAX_MATCHES).
+        map(|e| Match { entry: e }).
         collect()
 }
 
@@ -53,11 +58,11 @@ fn find_notes(dir: &str, term: &str) -> Vec<DirEntry> {
 fn run_search(term: &str, stdout: &mut Write) {
     let notes = find_notes(".", &term);
     let mut count = 0;
-    for entry in notes {
+    for m in notes {
         if count != 0 {
             write!(stdout, "\n").unwrap();
         }
-        write!(stdout, "{}\r", entry.path().display()).unwrap();
+        write!(stdout, "{}\r", m.entry.path().display()).unwrap();
         count += 1;
     }
 
