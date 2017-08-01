@@ -37,20 +37,21 @@ impl Match {
         self.path().file_stem().map(|o| o.to_string_lossy()).
             unwrap_or(Cow::Borrowed("???"))
     }
-}
 
-// Check whether a note contains a term.
-fn note_match(path: &Path, term: &str) -> Result<Option<Match>, io::Error> {
-    let mut file = File::open(path)?;
+    // Check whether a note contains a term. If so, return a new Match object.
+    // Otherwise, return None.
+    fn check(path: &Path, term: &str) -> Result<Option<Match>, io::Error> {
+        let mut file = File::open(path)?;
 
-    // TODO: Avoid reading the whole contents into memory at once?
-    let mut contents = String::new();
-    file.read_to_string(&mut contents)?;
+        // TODO: Avoid reading the whole contents into memory at once?
+        let mut contents = String::new();
+        file.read_to_string(&mut contents)?;
 
-    if contents.contains(term) {
-        Ok(Some(Match { path: path.to_path_buf() }))
-    } else {
-        Ok(None)
+        if contents.contains(term) {
+            Ok(Some(Match { path: path.to_path_buf() }))
+        } else {
+            Ok(None)
+        }
     }
 }
 
@@ -64,7 +65,7 @@ fn find_notes(dir: &str, term: &str) -> Vec<Match> {
     let walker = WalkDir::new(dir).into_iter();
     walker.filter_map(|e| e.ok()).
         filter(is_note).
-        filter_map(|e| note_match(&e.path(), term).unwrap()).
+        filter_map(|e| Match::check(&e.path(), term).unwrap()).
         take(MAX_MATCHES).
         collect()
 }
