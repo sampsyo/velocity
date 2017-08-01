@@ -26,11 +26,17 @@ fn is_note(entry: &DirEntry) -> bool {
 
 struct Match {
     path: PathBuf,
+    contents: String,
 }
 
 impl Match {
     fn path(&self) -> &Path {
         &self.path
+    }
+
+    fn preview(&self) -> &str {
+        // TODO Just the part that matched?
+        &self.contents.lines().next().unwrap()
     }
 
     fn name(&self) -> Cow<str> {
@@ -48,7 +54,10 @@ impl Match {
         file.read_to_string(&mut contents)?;
 
         if contents.contains(term) {
-            Ok(Some(Match { path: path.to_path_buf() }))
+            Ok(Some(Match {
+                path: path.to_path_buf(),
+                contents: contents,
+            }))
         } else {
             Ok(None)
         }
@@ -77,17 +86,29 @@ fn find_notes(dir: &str, term: &str) -> Vec<Match> {
 fn run_search(term: &str, stdout: &mut Write) {
     let notes = find_notes(".", &term);
     let mut count = 0;
+    let mut lines = 0;
     for m in notes {
+        // On non-first lines, move down to the next line.
         if count != 0 {
             write!(stdout, "\n").unwrap();
+            lines += 1;
         }
+
+        // Show the note's name (and return to the beginning of the line).
         write!(stdout, "{}\r", m.name()).unwrap();
+
+        // Show the preview for the first note.
+        if count == 0 {
+            write!(stdout, "\n{}\r", m.preview()).unwrap();
+            lines += 1;
+        }
+
         count += 1;
     }
 
     // Move the cursor back up.
-    if count > 1 {
-        write!(stdout, "{}", cursor::Up(count - 1)).unwrap();
+    if lines >= 1 {
+        write!(stdout, "{}", cursor::Up(lines)).unwrap();
     }
 }
 
