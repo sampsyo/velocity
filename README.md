@@ -11,3 +11,5 @@ Assumptions:
 * You have an `$EDITOR` you like.
 
 [nv]: http://notational.net
+
+Run `vel`, type a few characters you remember from the note you want, and hit return to open the top match.
