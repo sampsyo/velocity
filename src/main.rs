@@ -5,6 +5,7 @@ use walkdir::{WalkDir, DirEntry};
 use std::io::{self, Read, Write, stdout, stdin};
 use std::fs::File;
 use std::path::{Path, PathBuf};
+use std::borrow::Cow;
 use termion::input::TermRead;
 use termion::event::Event;
 use termion::event::Key;
@@ -30,6 +31,11 @@ struct Match {
 impl Match {
     fn path(&self) -> &Path {
         &self.path
+    }
+
+    fn name(&self) -> Cow<str> {
+        self.path().file_stem().map(|o| o.to_string_lossy()).
+            unwrap_or(Cow::Borrowed("???"))
     }
 }
 
@@ -69,7 +75,7 @@ fn run_search(term: &str, stdout: &mut Write) {
         if count != 0 {
             write!(stdout, "\n").unwrap();
         }
-        write!(stdout, "{}\r", m.path().display()).unwrap();
+        write!(stdout, "{}\r", m.name()).unwrap();
         count += 1;
     }
 
