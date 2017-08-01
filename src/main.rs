@@ -4,6 +4,7 @@ extern crate termion;
 use walkdir::{WalkDir, DirEntry};
 use std::io::{self, Read, Write, stdout, stdin};
 use std::fs::File;
+use std::path::PathBuf;
 use termion::input::TermRead;
 use termion::event::Event;
 use termion::event::Key;
@@ -23,7 +24,7 @@ fn is_note(entry: &DirEntry) -> bool {
 }
 
 struct Match {
-    entry: DirEntry,
+    path: PathBuf,
 }
 
 // Check whether a note contains a term.
@@ -47,7 +48,7 @@ fn find_notes(dir: &str, term: &str) -> Vec<Match> {
         filter(is_note).
         filter(|e| matches(e, term).unwrap()).
         take(MAX_MATCHES).
-        map(|e| Match { entry: e }).
+        map(|e| Match { path: e.path().to_path_buf() }).
         collect()
 }
 
@@ -62,7 +63,7 @@ fn run_search(term: &str, stdout: &mut Write) {
         if count != 0 {
             write!(stdout, "\n").unwrap();
         }
-        write!(stdout, "{}\r", m.entry.path().display()).unwrap();
+        write!(stdout, "{}\r", m.path.display()).unwrap();
         count += 1;
     }
 
