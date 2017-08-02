@@ -35,6 +35,7 @@ fn note_name(path: &Path) -> Cow<str> {
 struct Match {
     path: PathBuf,
     contents: String,
+    name: String,
 }
 
 impl Match {
@@ -47,8 +48,8 @@ impl Match {
         &self.contents.lines().next().unwrap()
     }
 
-    fn name(&self) -> Cow<str> {
-        note_name(&self.path())
+    fn name(&self) -> &str {
+        &self.name
     }
 
     // Check whether a note contains a term. If so, return a new Match object.
@@ -64,6 +65,7 @@ impl Match {
             Ok(Some(Match {
                 path: path.to_path_buf(),
                 contents: contents,
+                name: String::from(note_name(path)),
             }))
         } else {
             Ok(None)
