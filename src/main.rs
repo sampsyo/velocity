@@ -52,24 +52,24 @@ impl Note {
         &self.name
     }
 
-    // Check whether a note contains a term. If so, return a new Note object.
-    // Otherwise, return None.
-    fn check(path: &Path, term: &str) -> Result<Option<Note>, io::Error> {
+    fn read(path: &Path) -> Result<Note, io::Error> {
         let mut file = File::open(path)?;
 
         // TODO: Avoid reading the whole contents into memory at once?
         let mut contents = String::new();
         file.read_to_string(&mut contents)?;
 
-        if contents.contains(term) {
-            Ok(Some(Note {
-                path: path.to_path_buf(),
-                contents: contents,
-                name: String::from(note_name(path)),
-            }))
-        } else {
-            Ok(None)
-        }
+        Ok(Note {
+            path: path.to_path_buf(),
+            contents: contents,
+            name: String::from(note_name(path)),
+        })
+    }
+
+    // Check whether a note contains a term. If so, return a new Note object.
+    // Otherwise, return None.
+    fn matches(&self, term: &str) -> bool {
+        self.contents.contains(term)
     }
 }
 
@@ -83,7 +83,8 @@ fn find_notes(dir: &str, term: &str) -> Vec<Note> {
     let walker = WalkDir::new(dir).into_iter();
     walker.filter_map(|e| e.ok()).
         filter(is_note).
-        filter_map(|e| Note::check(&e.path(), term).unwrap()).
+        map(|e| Note::read(&e.path()).unwrap()).
+        filter(|n| n.matches(term)).
         take(MAX_MATCHES).
         collect()
 }
