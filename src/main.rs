@@ -69,7 +69,8 @@ impl Note {
     // Check whether a note contains a term. If so, return a new Note object.
     // Otherwise, return None.
     fn matches(&self, term: &str) -> bool {
-        self.contents.contains(term)
+        self.name.contains(term) ||
+            self.contents.contains(term)
     }
 }
 
