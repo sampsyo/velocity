@@ -25,6 +25,13 @@ fn is_note(entry: &DirEntry) -> bool {
          .unwrap_or(false)
 }
 
+// Get the human-readable title of a note from its filename.
+fn note_name(path: &Path) -> Cow<str> {
+    path.file_stem().map(|o| o.to_string_lossy()).
+        unwrap_or(Cow::Borrowed("???"))
+}
+
+// TODO Use scoring to sort the matches by relevance.
 struct Match {
     path: PathBuf,
     contents: String,
@@ -41,8 +48,7 @@ impl Match {
     }
 
     fn name(&self) -> Cow<str> {
-        self.path().file_stem().map(|o| o.to_string_lossy()).
-            unwrap_or(Cow::Borrowed("???"))
+        note_name(&self.path())
     }
 
     // Check whether a note contains a term. If so, return a new Match object.
