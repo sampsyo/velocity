@@ -32,13 +32,13 @@ fn note_name(path: &Path) -> Cow<str> {
 }
 
 // TODO Use scoring to sort the matches by relevance.
-struct Match {
+struct Note {
     path: PathBuf,
     contents: String,
     name: String,
 }
 
-impl Match {
+impl Note {
     fn path(&self) -> &Path {
         &self.path
     }
@@ -52,9 +52,9 @@ impl Match {
         &self.name
     }
 
-    // Check whether a note contains a term. If so, return a new Match object.
+    // Check whether a note contains a term. If so, return a new Note object.
     // Otherwise, return None.
-    fn check(path: &Path, term: &str) -> Result<Option<Match>, io::Error> {
+    fn check(path: &Path, term: &str) -> Result<Option<Note>, io::Error> {
         let mut file = File::open(path)?;
 
         // TODO: Avoid reading the whole contents into memory at once?
@@ -62,7 +62,7 @@ impl Match {
         file.read_to_string(&mut contents)?;
 
         if contents.contains(term) {
-            Ok(Some(Match {
+            Ok(Some(Note {
                 path: path.to_path_buf(),
                 contents: contents,
                 name: String::from(note_name(path)),
@@ -79,11 +79,11 @@ impl Match {
 // are added; perhaps preserve old match lists for when the user hits
 // backspace.
 // TODO: Do this searching in a separate thread to avoid blocking the UI.
-fn find_notes(dir: &str, term: &str) -> Vec<Match> {
+fn find_notes(dir: &str, term: &str) -> Vec<Note> {
     let walker = WalkDir::new(dir).into_iter();
     walker.filter_map(|e| e.ok()).
         filter(is_note).
-        filter_map(|e| Match::check(&e.path(), term).unwrap()).
+        filter_map(|e| Note::check(&e.path(), term).unwrap()).
         take(MAX_MATCHES).
         collect()
 }
