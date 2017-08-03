@@ -194,7 +194,6 @@ fn handle_event(event: &Event, mut stdout: &mut Write, curstr: &mut String,
         }
         _ => {},
     }
-    stdout.flush().unwrap();
     return Action::Nothing;
 }
 
@@ -224,6 +223,8 @@ fn interact() {
                 cursor_to_input(&mut stdout, curlen);
             },
         }
+
+        stdout.flush().unwrap();
     }
 
     // Go to the next line before exiting.
