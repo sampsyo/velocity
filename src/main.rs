@@ -141,15 +141,20 @@ fn cursor_to_input(stdout: &mut Write, curpos: usize) {
            cursor::Show).unwrap();
 }
 
+enum Action {
+    Exit,
+    Continue,
+}
+
 fn handle_event(event: &Event, mut stdout: &mut Write, curstr: &mut String,
-                curlen: &mut usize) -> bool {
+                curlen: &mut usize) -> Action {
     match event {
         // Exit.
-        &Event::Key(Key::Ctrl('c')) => return false,
-        &Event::Key(Key::Ctrl('d')) => return false,
+        &Event::Key(Key::Ctrl('c')) => return Action::Exit,
+        &Event::Key(Key::Ctrl('d')) => return Action::Exit,
 
         // TODO: Actually launch $EDITOR.
-        &Event::Key(Key::Char('\n')) => return false,
+        &Event::Key(Key::Char('\n')) => return Action::Exit,
 
         &Event::Key(Key::Backspace) => {
             match curstr.pop() {
@@ -187,7 +192,7 @@ fn handle_event(event: &Event, mut stdout: &mut Write, curstr: &mut String,
         _ => {},
     }
     stdout.flush().unwrap();
-    return true;
+    return Action::Continue;
 }
 
 fn interact() {
@@ -201,10 +206,11 @@ fn interact() {
     let mut curlen: usize = 0;
 
     for event in stdin.events() {
-        let cont = handle_event(&event.unwrap(), &mut stdout,
-                                &mut curstr, &mut curlen);
-        if !cont {
-            break;
+        let action = handle_event(&event.unwrap(), &mut stdout,
+                                  &mut curstr, &mut curlen);
+        match action {
+            Action::Exit => break,
+            _ => {},
         }
     }
 
