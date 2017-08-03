@@ -149,7 +149,7 @@ enum Action {
     Search,
 }
 
-fn handle_event(event: &Event, mut stdout: &mut Write, curstr: &mut String,
+fn handle_event(event: &Event, stdout: &mut Write, curstr: &mut String,
                 curlen: &mut usize) -> Action {
     match event {
         // Exit.
