@@ -141,6 +141,7 @@ fn cursor_to_input(stdout: &mut Write, curpos: usize) {
            cursor::Show).unwrap();
 }
 
+// The action that the user wants us to take.
 enum Action {
     Exit,
     Nothing,
@@ -204,12 +205,16 @@ fn interact() {
     stdout.write_all(PROMPT).unwrap();
     stdout.flush().unwrap();
 
+    // The current state of the input.
     let mut curstr = String::new();
     let mut curlen: usize = 0;
 
     for event in stdin.events() {
+        // Process the event, possibly updating the current text entry.
         let action = handle_event(&event.unwrap(), &mut stdout,
                                   &mut curstr, &mut curlen);
+
+        // Obey the user's command.
         match action {
             Action::Exit => break,
             Action::Edit => {
