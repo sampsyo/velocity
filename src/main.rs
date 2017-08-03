@@ -141,6 +141,55 @@ fn cursor_to_input(stdout: &mut Write, curpos: usize) {
            cursor::Show).unwrap();
 }
 
+fn handle_event(event: &Event, mut stdout: &mut Write, curstr: &mut String,
+                curlen: &mut usize) -> bool {
+    match event {
+        // Exit.
+        &Event::Key(Key::Ctrl('c')) => return false,
+        &Event::Key(Key::Ctrl('d')) => return false,
+
+        // TODO: Actually launch $EDITOR.
+        &Event::Key(Key::Char('\n')) => return false,
+
+        &Event::Key(Key::Backspace) => {
+            match curstr.pop() {
+                Some(_) => {
+                    *curlen -= 1;
+
+                    // Move the cursor back.
+                    write!(stdout, "{}{}",
+                           cursor::Left(1),
+                           clear::AfterCursor).unwrap();
+
+                    // Run the search.
+                    if *curlen > 0 {
+                        cursor_to_output(&mut stdout);
+                        run_search(&curstr, &mut stdout);
+                        cursor_to_input(&mut stdout, *curlen);
+                    }
+                }
+                None => {} // Do nothing.
+            }
+        }
+        &Event::Key(Key::Char(c)) => {
+            // Add the character to our string.
+            curstr.push(c);
+            *curlen += 1;
+
+            // Show the character.
+            write!(stdout, "{}", c).unwrap();
+
+            // Run the search.
+            cursor_to_output(&mut stdout);
+            run_search(&curstr, &mut stdout);
+            cursor_to_input(&mut stdout, *curlen);
+        }
+        _ => {},
+    }
+    stdout.flush().unwrap();
+    return true;
+}
+
 fn interact() {
     let stdout = stdout();
     let mut stdout = stdout.into_raw_mode().unwrap();
@@ -149,53 +198,14 @@ fn interact() {
     stdout.flush().unwrap();
 
     let mut curstr = String::new();
-    let mut curlen = 0;
+    let mut curlen: usize = 0;
 
     for event in stdin.events() {
-        match event.unwrap() {
-            // Exit.
-            Event::Key(Key::Ctrl('c')) => break,
-            Event::Key(Key::Ctrl('d')) => break,
-
-            // TODO: Actually launch $EDITOR.
-            Event::Key(Key::Char('\n')) => break,
-
-            Event::Key(Key::Backspace) => {
-                match curstr.pop() {
-                    Some(_) => {
-                        curlen -= 1;
-
-                        // Move the cursor back.
-                        write!(stdout, "{}{}",
-                               cursor::Left(1),
-                               clear::AfterCursor).unwrap();
-
-                        // Run the search.
-                        if curlen > 0 {
-                            cursor_to_output(&mut stdout);
-                            run_search(&curstr, &mut stdout);
-                            cursor_to_input(&mut stdout, curlen);
-                        }
-                    }
-                    None => {} // Do nothing.
-                }
-            }
-            Event::Key(Key::Char(c)) => {
-                // Add the character to our string.
-                curstr.push(c);
-                curlen += 1;
-
-                // Show the character.
-                write!(stdout, "{}", c).unwrap();
-
-                // Run the search.
-                cursor_to_output(&mut stdout);
-                run_search(&curstr, &mut stdout);
-                cursor_to_input(&mut stdout, curlen);
-            }
-            _ => {},
+        let cont = handle_event(&event.unwrap(), &mut stdout,
+                                &mut curstr, &mut curlen);
+        if !cont {
+            break;
         }
-        stdout.flush().unwrap();
     }
 
     // Go to the next line before exiting.
