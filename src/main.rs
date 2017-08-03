@@ -144,6 +144,7 @@ fn cursor_to_input(stdout: &mut Write, curpos: usize) {
 enum Action {
     Exit,
     Continue,
+    Edit,
 }
 
 fn handle_event(event: &Event, mut stdout: &mut Write, curstr: &mut String,
@@ -153,20 +154,19 @@ fn handle_event(event: &Event, mut stdout: &mut Write, curstr: &mut String,
         &Event::Key(Key::Ctrl('c')) => return Action::Exit,
         &Event::Key(Key::Ctrl('d')) => return Action::Exit,
 
-        // TODO: Actually launch $EDITOR.
-        &Event::Key(Key::Char('\n')) => return Action::Exit,
+        // Launch the user's editor.
+        &Event::Key(Key::Char('\n')) => return Action::Edit,
 
         &Event::Key(Key::Backspace) => {
             match curstr.pop() {
                 Some(_) => {
-                    *curlen -= 1;
-
                     // Move the cursor back.
                     write!(stdout, "{}{}",
                            cursor::Left(1),
                            clear::AfterCursor).unwrap();
 
                     // Run the search.
+                    *curlen -= 1;
                     if *curlen > 0 {
                         cursor_to_output(&mut stdout);
                         run_search(&curstr, &mut stdout);
@@ -179,12 +179,12 @@ fn handle_event(event: &Event, mut stdout: &mut Write, curstr: &mut String,
         &Event::Key(Key::Char(c)) => {
             // Add the character to our string.
             curstr.push(c);
-            *curlen += 1;
 
             // Show the character.
             write!(stdout, "{}", c).unwrap();
 
             // Run the search.
+            *curlen += 1;
             cursor_to_output(&mut stdout);
             run_search(&curstr, &mut stdout);
             cursor_to_input(&mut stdout, *curlen);
@@ -210,6 +210,10 @@ fn interact() {
                                   &mut curstr, &mut curlen);
         match action {
             Action::Exit => break,
+            Action::Edit => {
+                write!(stdout, "\n\rNow open the editor (TODO).").unwrap();
+                break;
+            },
             _ => {},
         }
     }
