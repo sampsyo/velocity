@@ -42,8 +42,8 @@ impl Note {
         &self.path
     }
 
+    // TODO Just show the part that matched.
     fn preview(&self) -> &str {
-        // TODO Just the part that matched?
         &self.contents.lines().next().unwrap()
     }
 
@@ -106,6 +106,8 @@ fn show_notes(notes: &Vec<Note>, stdout: &mut Write) {
         write!(stdout, "{}\r", m.name()).unwrap();
 
         // Show the preview for the first note.
+        // TODO Truncate lines that are longer than the terminal to avoid very
+        // unpleasant "lost cursor" syndrome.
         if count == 0 {
             write!(stdout, "\n{}{}{}\r",
                    color::Fg(color::White),
@@ -214,6 +216,7 @@ fn edit_note(stdout: &mut Write, note: &Note) {
     stdout.flush().unwrap();
 
     // Run the command.
+    // TODO Somehow support non-Unix platforms?
     Command::new(editor)
             .arg(note.path())
             .exec();
