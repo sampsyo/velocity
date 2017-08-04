@@ -210,6 +210,9 @@ fn interact() {
     let mut cur_term = String::new();
     let mut cur_term_len: usize = 0;
 
+    // The current set of matched result notes.
+    let mut found_notes: Vec<Note> = Vec::new();
+
     for event in stdin.events() {
         // Process the event, possibly updating the current text entry.
         let action = handle_event(&event.unwrap(), &mut stdout,
@@ -219,17 +222,22 @@ fn interact() {
         match action {
             Action::Exit => break,
             Action::Edit => {
-                write!(stdout, "\n\rNow open the editor (TODO).").unwrap();
+                // We open the first found note.
+                if found_notes.len() > 0 {
+                    let note = &found_notes[0];
+                    write!(stdout, "\n\redit {}",
+                           note.path().to_string_lossy()).unwrap();
+                }
                 break;
             },
             Action::Nothing => {},
             Action::Search => {
                 // Run the search to find matching notes.
-                let notes = find_notes(".", &cur_term);
+                found_notes = find_notes(".", &cur_term);
 
                 // Display the results.
                 cursor_to_output(&mut stdout);
-                show_notes(&notes, &mut stdout);
+                show_notes(&found_notes, &mut stdout);
                 cursor_to_input(&mut stdout, cur_term_len);
             },
         }
