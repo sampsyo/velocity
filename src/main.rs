@@ -7,6 +7,7 @@ use std::fs::File;
 use std::path::{Path, PathBuf};
 use std::borrow::Cow;
 use std::process::Command;
+use std::os::unix::process::CommandExt;
 use termion::input::TermRead;
 use termion::event::{Event, Key};
 use termion::raw::IntoRawMode;
@@ -207,15 +208,16 @@ fn edit_note(stdout: &mut Write, note: &Note) {
     let editor = env!("EDITOR");
 
     // Preview the command.
-    write!(stdout, "\n\r{} {}",
+    write!(stdout, "\n\r{} {}\n\r",
            editor,
            note.path().to_string_lossy()).unwrap();
+    stdout.flush().unwrap();
 
     // Run the command.
     Command::new(editor)
             .arg(note.path())
-            .spawn()
-            .expect("editor command failed");
+            .exec();
+    panic!("editor command failed");
 }
 
 fn interact() {
