@@ -200,6 +200,11 @@ fn handle_event(event: &Event, stdout: &mut Write, curstr: &mut String,
     return Action::Nothing;
 }
 
+fn edit_note(stdout: &mut Write, note: &Note) {
+    write!(stdout, "\n\r{}",
+           note.path().to_string_lossy()).unwrap();
+}
+
 fn interact() {
     let stdout = stdout();
     let mut stdout = stdout.into_raw_mode().unwrap();
@@ -227,9 +232,7 @@ fn interact() {
             Action::Edit => {
                 // We open the first found note.
                 if found_notes.len() > 0 {
-                    let note = &found_notes[0];
-                    write!(stdout, "\n\redit {}",
-                           note.path().to_string_lossy()).unwrap();
+                    edit_note(&mut stdout, &found_notes[0]);
                 }
                 break;
             },
