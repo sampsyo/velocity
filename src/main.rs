@@ -148,6 +148,9 @@ enum Action {
     Search,
 }
 
+// Process a single terminal input event. Possibly update the current search
+// term state and return the selected action.
+// TODO: Arrow keys to move through the result list.
 fn handle_event(event: &Event, stdout: &mut Write, curstr: &mut String,
                 curlen: &mut usize) -> Action {
     match event {
