@@ -6,13 +6,11 @@ use std::io::{self, Read, Write, stdout, stdin};
 use std::fs::File;
 use std::path::{Path, PathBuf};
 use std::borrow::Cow;
+use std::process::Command;
 use termion::input::TermRead;
-use termion::event::Event;
-use termion::event::Key;
+use termion::event::{Event, Key};
 use termion::raw::IntoRawMode;
-use termion::cursor;
-use termion::clear;
-use termion::color;
+use termion::{cursor, clear, color};
 
 const PROMPT: &'static [u8] = b"> ";
 const MAX_MATCHES: usize = 5;
@@ -203,6 +201,11 @@ fn handle_event(event: &Event, stdout: &mut Write, curstr: &mut String,
 fn edit_note(stdout: &mut Write, note: &Note) {
     write!(stdout, "\n\r{}",
            note.path().to_string_lossy()).unwrap();
+
+    Command::new("/bin/echo")
+            .arg(note.path())
+            .spawn()
+            .expect("editor command failed");
 }
 
 fn interact() {
