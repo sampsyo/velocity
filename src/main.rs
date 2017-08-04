@@ -93,9 +93,8 @@ fn find_notes(dir: &str, term: &str) -> Vec<Note> {
 // Handle an entered search term and display results. Precondition: the
 // terminal cursor is at the left-hand edge of the screen, ready to write more
 // output. Postcondition: the cursor is returned to that position.
-// TODO: Show the top match *in* the entry line instead of below, like NV.
-fn run_search(term: &str, stdout: &mut Write) {
-    let notes = find_notes(".", &term);
+// TODO: Show the top match *in* the entry line instead of below, like NV?
+fn show_notes(notes: &Vec<Note>, stdout: &mut Write) {
     let mut lines = 0;
     for (count, m) in notes.iter().enumerate() {
         // On non-first lines, move down to the next line.
@@ -223,8 +222,12 @@ fn interact() {
             },
             Action::Nothing => {},
             Action::Search => {
+                // Run the search to find matching notes.
+                let notes = find_notes(".", &curstr);
+
+                // Display the results.
                 cursor_to_output(&mut stdout);
-                run_search(&curstr, &mut stdout);
+                show_notes(&notes, &mut stdout);
                 cursor_to_input(&mut stdout, curlen);
             },
         }
