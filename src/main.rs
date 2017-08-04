@@ -198,11 +198,21 @@ fn handle_event(event: &Event, stdout: &mut Write, curstr: &mut String,
     return Action::Nothing;
 }
 
+// Open the user's $EDITOR for a given note.
+// TODO Configurable editor override.
 fn edit_note(stdout: &mut Write, note: &Note) {
-    write!(stdout, "\n\r{}",
+    // Get the $EDITOR command.
+    // TODO Support arguments in the variable.
+    // TODO Fallback for when $EDITOR is unset.
+    let editor = env!("EDITOR");
+
+    // Preview the command.
+    write!(stdout, "\n\r{} {}",
+           editor,
            note.path().to_string_lossy()).unwrap();
 
-    Command::new("/bin/echo")
+    // Run the command.
+    Command::new(editor)
             .arg(note.path())
             .spawn()
             .expect("editor command failed");
