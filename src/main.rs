@@ -204,14 +204,16 @@ fn interact() {
     stdout.write_all(PROMPT).unwrap();
     stdout.flush().unwrap();
 
-    // The current state of the input.
-    let mut curstr = String::new();
-    let mut curlen: usize = 0;
+    // The current state of the input. We keep track of the search term itself
+    // and its length in typed characters (which we expect to match terminal
+    // columns).
+    let mut cur_term = String::new();
+    let mut cur_term_len: usize = 0;
 
     for event in stdin.events() {
         // Process the event, possibly updating the current text entry.
         let action = handle_event(&event.unwrap(), &mut stdout,
-                                  &mut curstr, &mut curlen);
+                                  &mut cur_term, &mut cur_term_len);
 
         // Obey the user's command.
         match action {
@@ -223,12 +225,12 @@ fn interact() {
             Action::Nothing => {},
             Action::Search => {
                 // Run the search to find matching notes.
-                let notes = find_notes(".", &curstr);
+                let notes = find_notes(".", &cur_term);
 
                 // Display the results.
                 cursor_to_output(&mut stdout);
                 show_notes(&notes, &mut stdout);
-                cursor_to_input(&mut stdout, curlen);
+                cursor_to_input(&mut stdout, cur_term_len);
             },
         }
 
