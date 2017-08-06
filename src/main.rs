@@ -73,19 +73,13 @@ impl Note {
     }
 }
 
-// Find the notes matching a term.
-// TODO: Keep these matches in memory instead of re-scanning the directory
-// every time. Then, incrementally filter in-memory matches when new characters
-// are added; perhaps preserve old match lists for when the user hits
-// backspace.
+// Load all the notes from a given base directory.
 // TODO: Do this searching in a separate thread to avoid blocking the UI.
-fn find_notes(dir: &str, term: &str) -> Vec<Note> {
+fn load_notes(dir: &str) -> Vec<Note> {
     let walker = WalkDir::new(dir).into_iter();
     walker.filter_map(|e| e.ok()).
         filter(is_note).
         map(|e| Note::read(&e.path()).unwrap()).
-        filter(|n| n.matches(term)).
-        take(MAX_MATCHES).
         collect()
 }
 
@@ -93,7 +87,7 @@ fn find_notes(dir: &str, term: &str) -> Vec<Note> {
 // terminal cursor is at the left-hand edge of the screen, ready to write more
 // output. Postcondition: the cursor is returned to that position.
 // TODO: Show the top match *in* the entry line instead of below, like NV?
-fn show_notes(notes: &Vec<Note>, stdout: &mut Write) {
+fn show_notes(notes: &Vec<&Note>, stdout: &mut Write) {
     let mut lines = 0;
     for (count, m) in notes.iter().enumerate() {
         // On non-first lines, move down to the next line.
@@ -236,8 +230,11 @@ fn interact() {
     let mut cur_term = String::new();
     let mut cur_term_len: usize = 0;
 
+    // All the notes in the cwd.
+    let all_notes = load_notes(".");
+
     // The current set of matched result notes.
-    let mut found_notes: Vec<Note> = Vec::new();
+    let mut found_notes: Vec<&Note> = Vec::new();
 
     for event in stdin.events() {
         // Process the event, possibly updating the current text entry.
@@ -257,7 +254,10 @@ fn interact() {
             Action::Nothing => {},
             Action::Search => {
                 // Run the search to find matching notes.
-                found_notes = find_notes(".", &cur_term);
+                found_notes = all_notes.iter()
+                    .filter(|n| n.matches(&cur_term))
+                    .take(MAX_MATCHES)
+                    .collect();
 
                 // Display the results.
                 cursor_to_output(&mut stdout);
