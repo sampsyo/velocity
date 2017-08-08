@@ -196,7 +196,9 @@ fn handle_event(event: &Event, stdout: &mut Write, curstr: &mut String,
 }
 
 // Open the user's $EDITOR for a given note.
-// TODO Configurable editor override.
+// TODO Configurable editor override. For example, this is a nice way to have a
+// persistent note window:
+// $ mvim --servername note --remote-silent x.txt
 fn edit_note(stdout: &mut Write, note: &Note) {
     // Get the $EDITOR command.
     // TODO Support arguments in the variable.
