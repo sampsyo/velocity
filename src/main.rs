@@ -1,5 +1,6 @@
 extern crate walkdir;
 extern crate termion;
+extern crate textwrap;
 
 use walkdir::{WalkDir, DirEntry};
 use std::io::{self, Read, Write, stdout, stdin};
@@ -11,7 +12,7 @@ use std::os::unix::process::CommandExt;
 use termion::input::TermRead;
 use termion::event::{Event, Key};
 use termion::raw::IntoRawMode;
-use termion::{cursor, clear, color};
+use termion::{cursor, clear, color, terminal_size};
 
 const PROMPT: &'static [u8] = b"> ";
 const MAX_MATCHES: usize = 5;
@@ -43,8 +44,12 @@ impl Note {
     }
 
     // TODO Just show the part that matched.
-    fn preview(&self) -> &str {
-        &self.contents.lines().next().unwrap()
+    fn preview(&self, width: usize) -> String {
+        let lines = textwrap::wrap(&self.contents, width);
+        for line in lines {
+            return String::from(line.trim());
+        }
+        return String::from("");
     }
 
     fn name(&self) -> &str {
@@ -65,11 +70,12 @@ impl Note {
         })
     }
 
-    // Check whether a note contains a term. If so, return a new Note object.
-    // Otherwise, return None.
+    // Check whether a note contains a term.
+    // TODO: More efficient case-insensitive matching.
     fn matches(&self, term: &str) -> bool {
-        self.name.contains(term) ||
-            self.contents.contains(term)
+        let term_lower = term.to_lowercase();
+        self.name.to_lowercase().contains(&term_lower) ||
+            self.contents.to_lowercase().contains(&term_lower)
     }
 }
 
@@ -103,9 +109,10 @@ fn show_notes(notes: &Vec<&Note>, stdout: &mut Write) {
         // TODO Truncate lines that are longer than the terminal to avoid very
         // unpleasant "lost cursor" syndrome.
         if count == 0 {
+            let (width, _) = terminal_size().unwrap();
             write!(stdout, "\n{}{}{}\r",
                    color::Fg(color::White),
-                   m.preview(),
+                   m.preview(width as usize),
                    color::Fg(color::Reset)).unwrap();
             lines += 1;
         }
