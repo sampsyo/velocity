@@ -45,11 +45,9 @@ impl Note {
 
     // TODO Just show the part that matched.
     fn preview(&self, width: usize) -> String {
-        let lines = textwrap::wrap(&self.contents, width);
-        for line in lines {
-            return String::from(line.trim());
-        }
-        return String::from("");
+        let wrapped = textwrap::fill(&self.contents, width);
+        let first = wrapped.lines().next().unwrap();
+        String::from(first)
     }
 
     fn name(&self) -> &str {
