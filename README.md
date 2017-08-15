@@ -12,4 +12,4 @@ Assumptions:
 
 [nv]: http://notational.net
 
-Run `vel`, type a few characters you remember from the note you want, and hit return to open the top match.
+Run `vel`, type a few characters you remember from the note you want, and hit return to open the top match. If there's no match, hitting return will create a new note file instead.
