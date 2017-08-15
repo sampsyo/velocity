@@ -79,7 +79,7 @@ impl Note {
 
 // Load all the notes from a given base directory.
 // TODO: Do this searching in a separate thread to avoid blocking the UI.
-fn load_notes(dir: &str) -> Vec<Note> {
+fn load_notes(dir: &Path) -> Vec<Note> {
     let walker = WalkDir::new(dir).into_iter();
     walker.filter_map(|e| e.ok()).
         filter(is_note).
@@ -200,11 +200,9 @@ fn handle_event(event: &Event, stdout: &mut Write, curstr: &mut String,
     return Action::Nothing;
 }
 
-// Open the user's $EDITOR for a given note.
-// TODO Configurable editor override. For example, this is a nice way to have a
-// persistent note window:
-// $ mvim --servername note --remote-silent x.txt
-fn edit_note(stdout: &mut Write, note: &Note) {
+// Open the user's $EDITOR to edit a given file. This *execs* the editor
+// command, so it does not return.
+fn edit_file(stdout: &mut Write, path: &Path) {
     // Get the $EDITOR command.
     // TODO Support arguments in the variable.
     // TODO Fallback for when $EDITOR is unset.
@@ -213,15 +211,29 @@ fn edit_note(stdout: &mut Write, note: &Note) {
     // Preview the command.
     write!(stdout, "\n\r{} {}\n\r",
            editor,
-           note.path().to_string_lossy()).unwrap();
+           path.to_string_lossy()).unwrap();
     stdout.flush().unwrap();
 
     // Run the command.
     // TODO Somehow support non-Unix platforms?
     Command::new(editor)
-            .arg(note.path())
+            .arg(path)
             .exec();
     panic!("editor command failed");
+}
+
+// Open the user's $EDITOR for a given note.
+// TODO Configurable editor override. For example, this is a nice way to have a
+// persistent note window:
+// $ mvim --servername note --remote-silent x.txt
+fn edit_note(stdout: &mut Write, note: &Note) {
+    edit_file(stdout, note.path());
+}
+
+// Create a new note file.
+fn create_note(stdout: &mut Write, base: &Path, name: &str) {
+    let path = base.join(name).with_extension("txt");
+    edit_file(stdout, &path);
 }
 
 fn interact() {
@@ -238,7 +250,9 @@ fn interact() {
     let mut cur_term_len: usize = 0;
 
     // All the notes in the cwd.
-    let all_notes = load_notes(".");
+    // TODO Load base directory from a configuration.
+    let notes_dir = PathBuf::from(".");
+    let all_notes = load_notes(&notes_dir);
 
     // The current set of matched result notes.
     let mut found_notes: Vec<&Note> = Vec::new();
@@ -252,9 +266,12 @@ fn interact() {
         match action {
             Action::Exit => break,
             Action::Edit => {
-                // We open the first found note.
                 if found_notes.len() > 0 {
+                    // We open the first found note.
                     edit_note(&mut stdout, &found_notes[0]);
+                } else {
+                    // No matching notes: create one.
+                    create_note(&mut stdout, &notes_dir, &cur_term);
                 }
                 break;
             },
