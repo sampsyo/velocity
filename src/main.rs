@@ -104,8 +104,6 @@ fn show_notes(notes: &Vec<&Note>, stdout: &mut Write) {
         write!(stdout, "{}\r", m.name()).unwrap();
 
         // Show the preview for the first note.
-        // TODO Truncate lines that are longer than the terminal to avoid very
-        // unpleasant "lost cursor" syndrome.
         if count == 0 {
             let (width, _) = terminal_size().unwrap();
             write!(stdout, "\n{}{}{}\r",
@@ -283,9 +281,16 @@ fn interact() {
                     .take(MAX_MATCHES)
                     .collect();
 
-                // Display the results.
+                // If there are results, display them. Otherwise, indicate that
+                // we will create a new note.
                 cursor_to_output(&mut stdout);
-                show_notes(&found_notes, &mut stdout);
+                if found_notes.len() > 0 {
+                    show_notes(&found_notes, &mut stdout);
+                } else {
+                    write!(stdout, "{}*new note*{}\r",
+                           color::Fg(color::White),
+                           color::Fg(color::Reset)).unwrap();
+                }
                 cursor_to_input(&mut stdout, cur_term_len);
             },
         }
