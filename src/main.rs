@@ -3,7 +3,7 @@ extern crate termion;
 extern crate textwrap;
 
 use walkdir::{WalkDir, DirEntry};
-use std::io::{self, Read, Write, stdout, stdin};
+use std::io::{self, Read, Write, stdout, stdin, Stdout};
 use std::fs::File;
 use std::path::{Path, PathBuf};
 use std::borrow::Cow;
@@ -11,7 +11,7 @@ use std::process::Command;
 use std::os::unix::process::CommandExt;
 use termion::input::TermRead;
 use termion::event::{Event, Key};
-use termion::raw::IntoRawMode;
+use termion::raw::{RawTerminal, IntoRawMode};
 use termion::{cursor, clear, color, terminal_size};
 
 const PROMPT: &'static [u8] = b"> ";
@@ -200,7 +200,7 @@ fn handle_event(event: &Event, stdout: &mut Write, curstr: &mut String,
 
 // Open the user's $EDITOR to edit a given file. This *execs* the editor
 // command, so it does not return.
-fn edit_file(stdout: &mut Write, path: &Path) {
+fn edit_file(mut stdout: RawTerminal<Stdout>, path: &Path) {
     // Get the $EDITOR command.
     // TODO Support arguments in the variable.
     // TODO Fallback for when $EDITOR is unset.
@@ -211,6 +211,9 @@ fn edit_file(stdout: &mut Write, path: &Path) {
            editor,
            path.to_string_lossy()).unwrap();
     stdout.flush().unwrap();
+
+    // Drop the raw terminal wrapper to return to normal mode.
+    drop(stdout);
 
     // Run the command.
     // TODO Somehow support non-Unix platforms?
@@ -224,12 +227,12 @@ fn edit_file(stdout: &mut Write, path: &Path) {
 // TODO Configurable editor override. For example, this is a nice way to have a
 // persistent note window:
 // $ mvim --servername note --remote-silent x.txt
-fn edit_note(stdout: &mut Write, note: &Note) {
+fn edit_note(stdout: RawTerminal<Stdout>, note: &Note) {
     edit_file(stdout, note.path());
 }
 
 // Create a new note file.
-fn create_note(stdout: &mut Write, base: &Path, name: &str) {
+fn create_note(stdout: RawTerminal<Stdout>, base: &Path, name: &str) {
     let path = base.join(name).with_extension("txt");
     edit_file(stdout, &path);
 }
@@ -266,12 +269,12 @@ fn interact() {
             Action::Edit => {
                 if found_notes.len() > 0 {
                     // We open the first found note.
-                    edit_note(&mut stdout, &found_notes[0]);
+                    edit_note(stdout, &found_notes[0]);
                 } else {
                     // No matching notes: create one.
-                    create_note(&mut stdout, &notes_dir, &cur_term);
+                    create_note(stdout, &notes_dir, &cur_term);
                 }
-                break;
+                return;  // Unreachable: the above calls never return.
             },
             Action::Nothing => {},
             Action::Search => {
