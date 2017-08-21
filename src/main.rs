@@ -12,6 +12,7 @@ use std::path::{Path, PathBuf};
 use std::borrow::Cow;
 use std::process::Command;
 use std::os::unix::process::CommandExt;
+use std::env;
 use termion::input::TermRead;
 use termion::event::{Event, Key};
 use termion::raw::{RawTerminal, IntoRawMode};
@@ -19,7 +20,6 @@ use termion::{cursor, clear, color, terminal_size};
 
 const PROMPT: &'static [u8] = b"> ";
 const MAX_MATCHES: usize = 5;
-const CONFIG_PATH: &'static str = "~/.config/velocity.toml";
 
 fn is_note(entry: &DirEntry) -> bool {
     entry.file_type().is_file() &&
@@ -315,7 +315,8 @@ struct Config {
 
 // Load the Velocity configuration file.
 fn load_config() -> Config {
-    match File::open(CONFIG_PATH) {
+    let path = env::home_dir().unwrap().join(".config").join("velocity.toml");
+    match File::open(&path) {
         Ok(mut f) => {
             let mut contents = String::new();
             f.read_to_string(&mut contents).expect("could not read config");
