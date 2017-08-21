@@ -1,6 +1,9 @@
 extern crate walkdir;
 extern crate termion;
 extern crate textwrap;
+extern crate toml;
+#[macro_use]
+extern crate serde_derive;
 
 use walkdir::{WalkDir, DirEntry};
 use std::io::{self, Read, Write, stdout, stdin, Stdout};
@@ -16,6 +19,7 @@ use termion::{cursor, clear, color, terminal_size};
 
 const PROMPT: &'static [u8] = b"> ";
 const MAX_MATCHES: usize = 5;
+const CONFIG_PATH: &'static str = "~/.config/velocity.toml";
 
 fn is_note(entry: &DirEntry) -> bool {
     entry.file_type().is_file() &&
@@ -237,7 +241,7 @@ fn create_note(stdout: RawTerminal<Stdout>, base: &Path, name: &str) {
     edit_file(stdout, &path);
 }
 
-fn interact() {
+fn interact(notes_dir: &Path) {
     let stdout = stdout();
     let mut stdout = stdout.into_raw_mode().unwrap();
     let stdin = stdin();
@@ -251,8 +255,6 @@ fn interact() {
     let mut cur_term_len: usize = 0;
 
     // All the notes in the cwd.
-    // TODO Load base directory from a configuration.
-    let notes_dir = PathBuf::from(".");
     let all_notes = load_notes(&notes_dir);
 
     // The current set of matched result notes.
@@ -306,6 +308,30 @@ fn interact() {
     stdout.flush().unwrap();
 }
 
+#[derive(Deserialize)]
+struct Config {
+    path: String,
+}
+
+// Load the Velocity configuration file.
+fn load_config() -> Config {
+    match File::open(CONFIG_PATH) {
+        Ok(mut f) => {
+            let mut contents = String::new();
+            f.read_to_string(&mut contents).expect("could not read config");
+            toml::from_str(&contents).expect("incomplete config")
+        },
+        Err(_) => {
+            // Use defaults.
+            Config {
+                path: String::from(".")
+            }
+        },
+    }
+}
+
 fn main() {
-    interact();
+    let config = load_config();
+    let notes_dir = Path::new(&config.path);
+    interact(&notes_dir);
 }
